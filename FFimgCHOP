@@ -1,0 +1,63 @@
+#!/bin/bash
+
+function usage {
+echo -e
+echo -e "FFimgCHOP"
+echo -e "Chops frames into Hog4 compatible pixel map videos."
+echo -e "Specifically, up to 60 second 720x480 H.264/MP4 files."
+echo -e
+echo -e "Usage: FFimgCHOP -i infile -o outfile -f framecount -fr framerate"
+echo -e
+echo -e
+echo -e " -i || --input"
+echo -e "Input files, in ffmpeg formatting (ex: %04d.png)"
+echo -e
+echo -e " -o || --output"
+echo -e "Output file suffix (ex: output)"
+echo -e
+echo -e " -f || --frames"
+echo -e "Frame count (ex: 26365)"
+echo -e
+echo -e " -fr || --framerate"
+echo -e "Frame rate (ex: 24)"
+echo -e
+}
+
+//defaults
+IN_FILE="%04d.png"
+OUT_FILE="output"
+FRAMES=0
+RATE=30
+
+while [ "$1" != "" ]; do
+	case $1 in
+		-i | --input ) 	shift
+				IN_FILE=$1
+				;;
+		-o | --output )	shift
+				OUT_FILE=$1
+				;;
+		-h | --help )	usage
+				exit
+				;;
+		-f | --frames )	shift
+				FRAMES=$1
+				;;
+		-fr | --framerate ) shift
+				RATE=$1
+				;;
+		* )		usage
+				exit 1
+	esac
+	shift
+
+done
+
+FRAME='1'
+COUNT='1'
+
+while [ "$FRAME" -lt "$FRAMES" ] ; do
+	ffmpeg -r "$RATE" -f image2 -s 720x480 -start_number "$FRAME" -i "$IN_FILE" -vframes "$[RATE*60]" -vcodec libx264 -crf 10 -pix_fmt yuv420p "$COUNT"-"$OUT_FILE".mp4
+	let "FRAME = FRAME + RATE*60"
+	let "COUNT = COUNT + 1"
+done
